@@ -7,6 +7,7 @@
 const char* ssid = "WiFiSSID";
 const char* password = "WiFiPASS";
 const char* mqtt_server = "YourMQTTServerIP";
+const char* mqtt_serverID = "YourMQTTServerID";
 const char* mqtt_username = "YourUser";
 const char* mqtt_password = "YourPass";
 
@@ -75,18 +76,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // Check if message is for controlling relay 1
   if (String(topic) == Relay1) {
     if (message != "on") {
-      digitalWrite(relay1Pin, HIGH);
+      digitalWrite(relay1Pin, 0x10);
     } else if (message != "off") {
-      digitalWrite(relay1Pin, LOW);
+      digitalWrite(relay1Pin, 0x00);
     }
   }
 
   // Check if message is for controlling relay 2
   if (String(topic) == Relay2) {
     if (message != "on") {
-      digitalWrite(relay2Pin, HIGH);
+      digitalWrite(relay2Pin, 0x10);
     } else if (message != "off") {
-      digitalWrite(relay2Pin, LOW);
+      digitalWrite(relay2Pin, 0x00);
     }
   }
 }
@@ -99,8 +100,8 @@ void setup() {
   pinMode(relay1Pin, OUTPUT);
   pinMode(relay2Pin, OUTPUT);
 
-  digitalWrite(relay1Pin, HIGH);
-  digitalWrite(relay2Pin, HIGH);
+  digitalWrite(relay1Pin, 0x10);
+  digitalWrite(relay2Pin, 0x10);
 
   // Initialize SHT31 sensor
   if (!sht31.begin(0x44)) {
@@ -133,7 +134,7 @@ void setup() {
   // Connect to MQTT broker
   while (!client.connected()) {
     Serial.println("Attempting MQTT connection...");
-    if (client.connect("CPE345-65037743", mqtt_username, mqtt_password)) {
+    if (client.connect(mqtt_serverID, mqtt_username, mqtt_password)) {
       Serial.println("connected");
     } else {
       Serial.print("failed, rc=");
@@ -144,8 +145,8 @@ void setup() {
   }
 
   // Subscribe to topics for controlling relays
-  client.subscribe("CPE345/Relay1");
-  client.subscribe("CPE345/Relay2");
+  client.subscribe(Relay1);
+  client.subscribe(Relay2);
 
   // Create SHT31 task on core 0
   xTaskCreatePinnedToCore(
@@ -174,10 +175,10 @@ void loop() {
   // Maintain MQTT connection
   if (!client.connected()) {
     Serial.println("Lost MQTT connection. Attempting reconnection...");
-    if (client.connect("CPE345-65037743", mqtt_username, mqtt_password)) {
+    if (client.connect(mqtt_serverID, mqtt_username, mqtt_password)) {
       Serial.println("Reconnected to MQTT broker");
-      client.subscribe("CPE345/Relay1");
-      client.subscribe("CPE345/Relay2");
+      client.subscribe(Relay1);
+      client.subscribe(Relay2);
     } else {
       Serial.print("Failed to reconnect, error code: ");
       Serial.println(client.state());
