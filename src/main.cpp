@@ -4,11 +4,15 @@
 #include <SPI.h>
 #include <Adafruit_SHT31.h>
 
-const char* ssid = "Simon";
-const char* password = "rsha8928";
-const char* mqtt_server = "broker.emqx.io";
-const char* mqtt_username = "Kim";
-const char* mqtt_password = "1234";
+const char* ssid = "WiFiSSID";
+const char* password = "WiFiPASS";
+const char* mqtt_server = "YourMQTTServerIP";
+const char* mqtt_username = "YourUser";
+const char* mqtt_password = "YourPass";
+
+const char* TempHum = "UserMQTT/TempHum";
+const char* Relay1 = "UserMQTT/Relay1";
+const char* Relay2 = "UserMQTT/Relay2";
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -38,7 +42,7 @@ void shtTask(void * parameter) {
 
     // Publish temperature and humidity data to MQTT server
     String SHT31 = "🌡️ Temperature: " + String(t) + " °C\n💧 Humidity: " + String(h) + "%";
-    client.publish("CPE345/SHT31", SHT31.c_str());
+    client.publish(TempHum, SHT31.c_str());
 
     // Delay before next sensor reading and publication
     vTaskDelay(pdMS_TO_TICKS(5000)); // Adjust as needed
@@ -69,7 +73,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println(message);
 
   // Check if message is for controlling relay 1
-  if (String(topic) == "CPE345/Relay1") {
+  if (String(topic) == Relay1) {
     if (message != "on") {
       digitalWrite(relay1Pin, HIGH);
     } else if (message != "off") {
@@ -78,7 +82,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   // Check if message is for controlling relay 2
-  if (String(topic) == "CPE345/Relay2") {
+  if (String(topic) == Relay2) {
     if (message != "on") {
       digitalWrite(relay2Pin, HIGH);
     } else if (message != "off") {
